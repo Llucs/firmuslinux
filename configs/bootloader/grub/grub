@@ -1,0 +1,16 @@
+# Firmus Linux GRUB defaults
+GRUB_DEFAULT=saved
+GRUB_TIMEOUT=5
+GRUB_TIMEOUT_STYLE=menu
+GRUB_DISTRIBUTOR="Firmus"
+GRUB_CMDLINE_LINUX_DEFAULT="quiet splash loglevel=3 nvidia_drm.modeset=1"
+GRUB_CMDLINE_LINUX=""
+GRUB_PRELOAD_MODULES="part_gpt part_msdos btrfs ext4 fat"
+GRUB_TERMINAL_INPUT=console
+GRUB_TERMINAL_OUTPUT=gfxterm
+GRUB_THEME=/boot/grub/themes/firmus/theme.txt
+GRUB_BACKGROUND=/boot/grub/themes/firmus/background.png
+GRUB_DISABLE_RECOVERY=true
+GRUB_DISABLE_OS_PROBER=false
+GRUB_ENABLE_CRYPTODISK=y
+GRUB_SAVEDEFAULT=true

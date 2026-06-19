@@ -1,0 +1,132 @@
+#!/usr/bin/env bash
+# Firmus Linux Status — System health overview
+set -euo pipefail
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log_info() { echo -e "${CYAN}[INFO]${NC} $*"; }
+log_ok() { echo -e "${GREEN}[OK]${NC} $*"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $*"; }
+
+check_snapper() {
+    echo "── Snapshots ───────────────────────────────"
+    if command -v snapper &>/dev/null; then
+        local count
+        count=$(snapper list 2>/dev/null | tail -n +5 | wc -l)
+        log_ok "snapper active: $count snapshots"
+        local last
+        last=$(snapper list 2>/dev/null | tail -1 | awk '{print $1, $2}')
+        log_info "Latest snapshot: $last"
+    else
+        log_warn "snapper not installed"
+    fi
+}
+
+check_initramfs() {
+    echo "── Initramfs ───────────────────────────────"
+    if command -v dracut &>/dev/null; then
+        log_ok "dracut available ($(dracut --version 2>/dev/null || echo 'unknown'))"
+    else
+        log_error "dracut not found!"
+    fi
+    if [ -f /boot/initramfs-linux.img ]; then
+        log_ok "initramfs present"
+    else
+        log_warn "initramfs-linux.img not found"
+    fi
+}
+
+check_kernel() {
+    echo "── Kernel ──────────────────────────────────"
+    log_info "Running: $(uname -r)"
+    log_info "Installed: $(pacman -Q linux 2>/dev/null || echo 'not installed')"
+    if command -v linux-version &>/dev/null; then
+        log_info "Version: $(linux-version 2>/dev/null || echo 'unknown')"
+    fi
+}
+
+check_updates() {
+    echo "── Updates ─────────────────────────────────"
+    if command -v pacman &>/dev/null; then
+        local updates
+        updates=$(pacman -Qu 2>/dev/null | wc -l)
+        if [ "$updates" -gt 0 ]; then
+            log_warn "$updates package(s) available for update"
+            pacman -Qu 2>/dev/null | head -5
+            if [ "$updates" -gt 5 ]; then
+                log_info "... and $(($updates - 5)) more"
+            fi
+        else
+            log_ok "System is up to date"
+        fi
+    fi
+}
+
+check_tcr() {
+    echo "── TCR Repository ──────────────────────────"
+    if pacman -Sl firmus &>/dev/null; then
+        local count
+        count=$(pacman -Sl firmus 2>/dev/null | wc -l)
+        log_ok "TCR active: $count packages available"
+    else
+        log_warn "TCR repository not configured"
+    fi
+}
+
+check_nvidia() {
+    echo "── NVIDIA ──────────────────────────────────"
+    if lspci -nn | grep -qi nvidia 2>/dev/null; then
+        if lsmod | grep -q nvidia_drm; then
+            log_ok "NVIDIA driver loaded (modesetting active)"
+        else
+            log_warn "NVIDIA GPU detected but driver not loaded"
+        fi
+        if [ -f /sys/module/nvidia_drm/parameters/modeset ]; then
+            local ms
+            ms=$(cat /sys/module/nvidia_drm/parameters/modeset)
+            log_info "nvidia_drm.modeset = $ms"
+        fi
+    else
+        log_info "No NVIDIA GPU detected"
+    fi
+}
+
+check_bootloader() {
+    echo "── Bootloader ──────────────────────────────"
+    if command -v bootctl &>/dev/null && bootctl status 2>/dev/null | grep -q "Boot Loader"; then
+        log_ok "systemd-boot active"
+    elif [ -f /boot/grub/grub.cfg ]; then
+        log_ok "GRUB installed"
+    else
+        log_warn "No bootloader configuration found"
+    fi
+}
+
+main() {
+    echo "========================================"
+    echo "  Firmus Linux System Status"
+    echo "========================================"
+    echo ""
+    check_kernel
+    echo ""
+    check_initramfs
+    echo ""
+    check_snapper
+    echo ""
+    check_updates
+    echo ""
+    check_tcr
+    echo ""
+    check_nvidia
+    echo ""
+    check_bootloader
+    echo ""
+    echo "========================================"
+}
+
+main "$@"

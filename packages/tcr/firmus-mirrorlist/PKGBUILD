@@ -1,0 +1,27 @@
+# Maintainer: Llucs <c307lucas@gmail.com>
+# Firmus Linux mirror list package
+
+pkgname=firmus-mirrorlist
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Firmus Linux mirror list for TCR and Arch repositories"
+arch=('any')
+url="https://github.com/firmuslinux/firmuslinux"
+license=('GPL-3.0-or-later')
+depends=('pacman>=6.0')
+source=("firmus-mirrorlist")
+sha256sums=('SKIP')
+
+package() {
+  install -d "$pkgdir/etc/pacman.d"
+  install -m 644 "$srcdir/firmus-mirrorlist" "$pkgdir/etc/pacman.d/"
+}
+
+firmus-mirrorlist() {
+cat << 'MIRROREOF'
+# Firmus Linux mirror list
+# TCR repository
+[firmus]
+Server = https://firmuslinux.github.io/firmuslinux/x86_64
+MIRROREOF
+}

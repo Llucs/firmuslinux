@@ -1,0 +1,50 @@
+# Firmus Linux .gitignore
+
+# ISO build output
+iso/out/
+iso/work/
+
+# Built packages
+repo/x86_64/*.pkg.tar.zst
+repo/x86_64/*.pkg.tar.zst.sig
+repo/x86_64/*.db.tar.zst
+repo/x86_64/*.db.tar.zst.sig
+repo/x86_64/*.files.tar.zst
+repo/x86_64/*.files.tar.zst.sig
+repo/x86_64/*.db
+repo/x86_64/*.files
+
+# PKGBUILD build artifacts
+packages/tcr/*/src/
+packages/tcr/*/pkg/
+packages/tcr/*/*.pkg.tar.zst
+packages/tcr/*/*.pkg.tar.zst.sig
+packages/tcr/*/PKGBUILD.bak
+
+# Calamares build artifacts
+calamares/build/
+
+# Temporary files
+*.swp
+*.swo
+*~
+*.bak
+*.orig
+*.rej
+
+# OS files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Editor configs
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# GPG signing
+*.gpg.bak
+
+# Logs
+*.log

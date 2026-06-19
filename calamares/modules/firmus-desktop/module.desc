@@ -1,0 +1,4 @@
+# Firmus Linux desktop optimization module
+name: firmus-desktop
+type: job
+interface: shellprocess

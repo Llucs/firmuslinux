@@ -1,0 +1,37 @@
+# Maintainer: Llucs <c307lucas@gmail.com>
+# Firmus Linux bootloader configuration package
+
+pkgname=firmus-bootloader-config
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Firmus Linux bootloader systemd-boot and GRUB configuration"
+arch=('any')
+url="https://github.com/firmuslinux/firmuslinux"
+license=('GPL-3.0-or-later')
+depends=('systemd')
+source=("loader.conf" "firmus.conf")
+sha256sums=('SKIP' 'SKIP')
+
+package() {
+  install -d "$pkgdir/usr/share/firmus/bootloader/"
+  install -m 644 "$srcdir/loader.conf" "$pkgdir/usr/share/firmus/bootloader/"
+  install -m 644 "$srcdir/firmus.conf" "$pkgdir/usr/share/firmus/bootloader/"
+}
+
+loader.conf() {
+cat << 'LOADEREOF'
+default firmus
+timeout 5
+console-mode max
+editor yes
+LOADEREOF
+}
+
+firmus.conf() {
+cat << 'ENTRYEOF'
+title Firmus Linux
+linux /vmlinuz-linux
+initrd /initramfs-linux.img
+options root=UUID=ROOT_UUID rw quiet splash nvidia_drm.modeset=1
+ENTRYEOF
+}

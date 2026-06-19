@@ -1,0 +1,46 @@
+name: Package Request
+description: Request a package to be added to the TCR
+title: "[PKG] "
+labels: [package-request]
+body:
+  - type: input
+    id: package-name
+    attributes:
+      label: Package Name
+      description: Name of the package in AUR or upstream
+    validations:
+      required: true
+  - type: input
+    id: upstream-url
+    attributes:
+      label: Upstream URL
+      description: Official source code repository or website
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What does this package do?
+    validations:
+      required: true
+  - type: dropdown
+    id: tier
+    attributes:
+      label: Suggested TCR Tier
+      options:
+        - Tier 2 (community maintained)
+        - Tier 3 (binary cache)
+    validations:
+      required: true
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Requirements
+      options:
+        - label: Package is open source (GPL/MIT/Apache/BSD compatible)
+          required: true
+        - label: Package has a stable upstream release
+          required: true
+        - label: Package does not duplicate functionality of existing TCR packages
+          required: false

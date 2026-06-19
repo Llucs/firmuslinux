@@ -1,0 +1,10 @@
+[Unit]
+Description=Firmus Linux Snapshot Timer — Hourly automatic snapshots
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target

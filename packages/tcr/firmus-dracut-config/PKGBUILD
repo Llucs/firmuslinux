@@ -1,0 +1,68 @@
+# Maintainer: Llucs <c307lucas@gmail.com>
+# Firmus Linux dracut configuration package
+
+pkgname=firmus-dracut-config
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Firmus Linux dracut initramfs configuration"
+arch=('any')
+url="https://github.com/firmuslinux/firmuslinux"
+license=('GPL-3.0-or-later')
+depends=('dracut')
+conflicts=('mkinitcpio')
+provides=('initramfs')
+source=(
+  "10-firmus-defaults.conf"
+  "20-firmus-nvidia.conf"
+  "30-firmus-btrfs.conf"
+  "disable-mkinitcpio.conf"
+)
+sha256sums=('SKIP' 'SKIP' 'SKIP' 'SKIP')
+
+package() {
+  install -d "$pkgdir/etc/dracut.conf.d"
+  install -m 644 "$srcdir/10-firmus-defaults.conf" "$pkgdir/etc/dracut.conf.d/"
+  install -m 644 "$srcdir/20-firmus-nvidia.conf" "$pkgdir/etc/dracut.conf.d/"
+  install -m 644 "$srcdir/30-firmus-btrfs.conf" "$pkgdir/etc/dracut.conf.d/"
+
+  install -d "$pkgdir/etc/mkinitcpio.conf.d"
+  install -m 644 "$srcdir/disable-mkinitcpio.conf" "$pkgdir/etc/mkinitcpio.conf.d/00-firmus-disable.conf"
+}
+
+10-firmus-defaults.conf() {
+cat << 'DRACUTEOF'
+hostonly=yes
+hostonly_cmdline=yes
+compress="zstd"
+compress_args="-1"
+add_dracutmodules+=" btrfs snapper lvm dm dmraid crypt mdraid "
+add_dracutmodules+=" nfs network kernel-modules "
+add_drivers+=" btrfs ext4 xfs vfat nls_iso8859-1 nls_utf8 "
+add_firmware+=" yes "
+uefi=yes
+uefi_stub="/usr/lib/systemd/boot/efi/linuxx64.efi.stub"
+uefi_output_dir="/boot/EFI/Linux/"
+generate_standalone_initramfs=yes
+DRACUTEOF
+}
+
+20-firmus-nvidia.conf() {
+cat << 'DRACUTNVEOF'
+add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
+force_drivers+=" nvidia_drm "
+DRACUTNVEOF
+}
+
+30-firmus-btrfs.conf() {
+cat << 'DRACUTBTREOF'
+add_drivers+=" btrfs "
+add_dracutmodules+=" btrfs "
+DRACUTBTREOF
+}
+
+disable-mkinitcpio.conf() {
+cat << 'MKINITEOF'
+# Firmus Linux: mkinitcpio is intentionally disabled
+# This distribution uses dracut exclusively
+MKINITEOF
+}

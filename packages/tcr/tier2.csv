@@ -1,0 +1,7 @@
+# Firmus Linux TCR Tier 2 — Community maintained packages
+# Automated CI verification. 1 maintainer approval needed.
+# Format: package-name,description
+chaotic-keyring,Chaotic AUR keyring
+yay-bin,AUR helper (binary)
+paru-bin,AUR helper (binary)
+cachyos-keyring,CachyOS keyring

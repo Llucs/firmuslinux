@@ -1,0 +1,33 @@
+# Firmus Linux nftables firewall rules
+table inet filter {
+    chain input {
+        type filter hook input priority filter; policy drop;
+
+        # Allow loopback
+        iif lo accept
+
+        # Allow established connections
+        ct state established,related accept
+
+        # Allow SSH (rate limited)
+        tcp dport 22 ct state new limit rate 10/minute accept
+
+        # Allow ping (rate limited)
+        icmp type echo-request limit rate 10/second accept
+
+        # Allow local network
+        iifname "enp*" accept
+        iifname "wlp*" accept
+
+        # Log dropped packets
+        log prefix "firmus-fw-drop: " flags all
+    }
+
+    chain forward {
+        type filter hook forward priority filter; policy drop;
+    }
+
+    chain output {
+        type filter hook output priority filter; policy accept;
+    }
+}

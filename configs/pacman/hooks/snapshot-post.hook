@@ -1,0 +1,14 @@
+# Firmus Linux post-transaction snapshot hook
+[Trigger]
+Operation = Upgrade
+Operation = Install
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Description = Creating post-update snapshot...
+When = PostTransaction
+Exec = /usr/bin/snapper create -d "post-update" --description "Automatic post-update snapshot"
+AbortOnFail = false
+Depends = snapper

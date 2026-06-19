@@ -1,0 +1,32 @@
+# Firmus Linux .gitattributes
+* text=auto eol=lf
+
+# Shell scripts
+*.sh text eol=lf
+
+# Configuration
+*.conf text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.json text eol=lf
+*.csv text eol=lf
+*.toml text eol=lf
+*.ini text eol=lf
+
+# Documentation
+*.md text eol=lf
+*.txt text eol=lf
+
+# PKGBUILD
+PKGBUILD text eol=lf
+*.install text eof=lf
+
+# Binary files
+*.png binary
+*.jpg binary
+*.gif binary
+*.ico binary
+*.gpg binary
+*.sig binary
+*.iso binary
+*.pkg.tar.zst binary

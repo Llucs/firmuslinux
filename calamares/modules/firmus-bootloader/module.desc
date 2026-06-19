@@ -1,0 +1,4 @@
+# Firmus Linux bootloader configuration module
+name: firmus-bootloader
+type: job
+interface: shellprocess

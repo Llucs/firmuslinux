@@ -1,0 +1,4 @@
+# Firmus Linux seat group configuration module
+name: firmus-seat
+type: job
+interface: shellprocess

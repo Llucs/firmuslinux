@@ -1,0 +1,14 @@
+[Unit]
+Description=Firmus Linux Post-Update Snapshot
+Documentation=https://github.com/firmuslinux/firmuslinux
+After=systemd-update.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/snapper create -d "post-update" --description "Automatic post-update snapshot"
+ExecStartPost=/usr/bin/snapper list
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

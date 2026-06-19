@@ -1,0 +1,113 @@
+name: Verify AUR Packages
+
+on:
+  schedule:
+    - cron: '0 10 * * *'
+  workflow_dispatch:
+    inputs:
+      package_list:
+        description: 'Space-separated package list (default: top 1000 AUR)'
+        required: false
+        type: string
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux/archlinux:latest
+      options: --privileged
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize system
+        run: |
+          pacman-key --init
+          pacman-key --populate archlinux
+          pacman -Syu --noconfirm --needed curl jq python python-yaml git base-devel
+
+      - name: Fetch AUR package list
+        id: fetch
+        run: |
+          PACKAGES="${{ github.event.inputs.package_list }}"
+          if [ -z "$PACKAGES" ]; then
+            curl -s 'https://aur.archlinux.org/packages.gz' | gunzip > /tmp/aur-packages.txt
+            PACKAGES=$(head -1000 /tmp/aur-packages.txt | tr '\n' ' ')
+          fi
+          echo "packages=$PACKAGES" >> $GITHUB_OUTPUT
+
+      - name: Verify against allowlist
+        run: |
+          mkdir -p /tmp/aur-verify
+          RESULTS_FILE="/tmp/aur-verify/results.json"
+          ALLOWLIST_FILE="packages/tcr/aur-allowlist.json"
+          CHANGES_FILE="/tmp/aur-verify/changes.txt"
+
+          mkdir -p "$(dirname "$ALLOWLIST_FILE")"
+          if [ ! -f "$ALLOWLIST_FILE" ]; then
+            echo '{"packages":{}}' > "$ALLOWLIST_FILE"
+          fi
+
+          echo "[]" > "$RESULTS_FILE"
+          touch "$CHANGES_FILE"
+
+          for pkg in ${{ steps.fetch.outputs.packages }}; do
+            [ -z "$pkg" ] && continue
+            PKGBUILD_URL="https://aur.archlinux.org/cgit/aur.git/plain/PKGBUILD?h=$pkg"
+            SHA=$(curl -s "$PKGBUILD_URL" | sha256sum | cut -d' ' -f1)
+
+            if [ -z "$SHA" ]; then
+              continue
+            fi
+
+            CURRENT_SHA=$(jq -r ".packages[\"$pkg\"] // empty" "$ALLOWLIST_FILE")
+
+            if [ -n "$CURRENT_SHA" ] && [ "$SHA" != "$CURRENT_SHA" ]; then
+              echo "CHANGED: $pkg ($CURRENT_SHA -> $SHA)" >> "$CHANGES_FILE"
+            fi
+
+            jq --arg pkg "$pkg" --arg sha "$SHA" \
+              '.packages[$pkg] = $sha' "$ALLOWLIST_FILE" > /tmp/aur-allowlist-tmp.json
+            mv /tmp/aur-allowlist-tmp.json "$ALLOWLIST_FILE"
+          done
+
+      - name: Report changes
+        id: report
+        run: |
+          CHANGES_FILE="/tmp/aur-verify/changes.txt"
+          if [ -s "$CHANGES_FILE" ]; then
+            echo "changed_packages<<EOF" >> $GITHUB_OUTPUT
+            cat "$CHANGES_FILE" >> $GITHUB_OUTPUT
+            echo "EOF" >> $GITHUB_OUTPUT
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+          else
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit allowlist updates
+        run: |
+          git config --global user.name "Firmus Bot"
+          git config --global user.email "bot@firmuslinux.org"
+          git add packages/tcr/aur-allowlist.json
+          if git diff --cached --quiet; then
+            echo "No changes to allowlist"
+          else
+            git commit -m "aur-allowlist: daily update $(date +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Open issue for changed packages
+        if: steps.report.outputs.has_changes == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const changes = process.env.CHANGED_PACKAGES;
+            const body = `## AUR Package Changes Detected\n\nThe following AUR packages have changed:\n\n\`\`\`\n${changes}\n\`\`\`\n\nPlease review these changes and update the TCR packages accordingly.`;
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `AUR changes detected: ${new Date().toISOString().split('T')[0]}`,
+              body: body,
+              labels: ['aur-verify', 'automated']
+            });

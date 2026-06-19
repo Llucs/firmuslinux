@@ -1,0 +1,15 @@
+[Unit]
+Description=Firmus Linux Kernel Cleanup — Remove stale kernels
+Documentation=https://github.com/firmuslinux/firmuslinux
+After=systemd-boot-update.service
+ConditionPathExists=/efi
+ConditionPathExists=/usr/lib/modules
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/firmus-kernel-cleanup
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

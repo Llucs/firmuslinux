@@ -1,0 +1,14 @@
+[Unit]
+Description=Firmus Linux Snapshot — Pre-update system snapshot
+Documentation=https://github.com/firmuslinux/firmuslinux
+Before=systemd-update.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/snapper create -d "pre-update" --description "Automatic pre-update snapshot"
+ExecStartPost=/usr/bin/snapper list
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

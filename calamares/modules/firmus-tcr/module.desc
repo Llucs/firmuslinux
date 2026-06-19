@@ -1,0 +1,4 @@
+# Firmus Linux TCR repository configuration module
+name: firmus-tcr
+type: job
+interface: shellprocess

@@ -1,0 +1,19 @@
+# Firmus Linux kernel install hook
+# Automatically removes old kernel modules and initramfs
+# Keeping only current and 1 previous kernel
+
+post_install() {
+    local current_kernel="${1}"
+    local keep_count=2
+    local count=0
+
+    for kver in $(ls -1 /usr/lib/modules/ 2>/dev/null | sort -V -r); do
+        count=$((count + 1))
+        if [ "$count" -le "$keep_count" ]; then
+            continue
+        fi
+        rm -rf "/usr/lib/modules/$kver"
+        rm -f "/boot/initramfs-${kver}.img"
+        rm -f "/boot/EFI/Linux/firmus-${kver}.efi"
+    done
+}

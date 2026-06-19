@@ -1,0 +1,37 @@
+# Maintainer: Llucs <c307lucas@gmail.com>
+# Firmus Linux snapper configuration package
+
+pkgname=firmus-snapper-config
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Firmus Linux snapper Btrfs snapshot configuration"
+arch=('any')
+url="https://github.com/firmuslinux/firmuslinux"
+license=('GPL-3.0-or-later')
+depends=('snapper')
+source=("root-config")
+sha256sums=('SKIP')
+
+package() {
+  install -d "$pkgdir/etc/snapper/configs"
+  install -m 644 "$srcdir/root-config" "$pkgdir/etc/snapper/configs/root"
+}
+
+root-config() {
+cat << 'SNAPPEREOF'
+SUBVOLUME="/"
+FSTYPE="btrfs"
+TIMELINE_CREATE="yes"
+TIMELINE_CLEANUP="yes"
+TIMELINE_MIN_AGE="1800"
+TIMELINE_LIMIT_DAILY="5"
+TIMELINE_LIMIT_WEEKLY="10"
+TIMELINE_LIMIT_MONTHLY="5"
+TIMELINE_LIMIT_YEARLY="2"
+NUMBER_CLEANUP="yes"
+NUMBER_MIN_AGE="1800"
+NUMBER_LIMIT="50"
+NUMBER_LIMIT_IMPORTANT="10"
+ALLOW_GROUPS="wheel"
+SNAPPEREOF
+}

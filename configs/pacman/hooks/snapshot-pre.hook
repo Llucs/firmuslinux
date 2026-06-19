@@ -1,0 +1,14 @@
+# Firmus Linux pre-transaction snapshot hook
+[Trigger]
+Operation = Upgrade
+Operation = Install
+Operation = Remove
+Type = Package
+Target = *
+
+[Action]
+Description = Creating pre-update snapshot...
+When = PreTransaction
+Exec = /usr/bin/snapper create -d "pre-update" --description "Automatic pre-update snapshot"
+AbortOnFail = false
+Depends = snapper

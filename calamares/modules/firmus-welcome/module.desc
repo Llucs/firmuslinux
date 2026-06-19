@@ -1,0 +1,4 @@
+# Firmus Linux Calamares welcome module
+name: firmus-welcome
+type: view
+interface: qtplugins

@@ -1,0 +1,124 @@
+#!/usr/bin/env bash
+# Firmus Linux Update — Transactional system updater with automatic snapshots
+set -euo pipefail
+
+VERSION="1.0.0"
+SNAPPER_CMD="/usr/bin/snapper"
+PACMAN_CMD="/usr/bin/pacman"
+GRUB_CMD="/usr/bin/grub-mkconfig"
+DRACUT_CMD="/usr/bin/dracut"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log_info() { echo -e "${CYAN}[INFO]${NC} $*"; }
+log_ok() { echo -e "${GREEN}[OK]${NC} $*"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $*"; }
+
+cleanup() {
+    if [ $? -ne 0 ]; then
+        log_warn "Update interrupted. Run 'firmus-rollback --list' to see available snapshots."
+    fi
+}
+trap cleanup EXIT
+
+check_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        log_error "This command must be run as root."
+        exit 1
+    fi
+}
+
+check_snapper() {
+    if ! command -v "$SNAPPER_CMD" &>/dev/null; then
+        log_warn "snapper not found. Snapshots will not be created."
+        return 1
+    fi
+    return 0
+}
+
+create_snapshot() {
+    local description="$1"
+    local label="$2"
+    if check_snapper; then
+        log_info "Creating snapshot: $description"
+        $SNAPPER_CMD create -d "$description" --description "$label" 2>/dev/null || {
+            log_warn "Failed to create snapshot. Continuing without snapshot."
+        }
+    fi
+}
+
+show_header() {
+    echo "========================================"
+    echo "  Firmus Linux System Update"
+    echo "  Version $VERSION"
+    echo "========================================"
+    echo ""
+}
+
+update_system() {
+    log_info "Synchronizing package databases..."
+    $PACMAN_CMD -Sy
+
+    log_info "Checking for updates..."
+    if ! $PACMAN_CMD -Qu | grep -q .; then
+        log_ok "System is up to date."
+        return 0
+    fi
+
+    $PACMAN_CMD -Qu
+    echo ""
+
+    read -rp "Proceed with update? [Y/n] " response
+    case "$response" in
+        [nN]|[nN][oO])
+            log_info "Update cancelled."
+            return 1
+            ;;
+        *)
+            create_snapshot "pre-update" "Automatic snapshot before pacman -Syu"
+            ;;
+    esac
+
+    log_info "Running pacman -Syu..."
+    if $PACMAN_CMD -Syu --noconfirm; then
+        create_snapshot "post-update" "Automatic snapshot after pacman -Syu"
+        log_ok "Update completed successfully."
+    else
+        log_error "Update failed. Review the output above."
+        log_warn "You can roll back with: firmus-rollback"
+        return 1
+    fi
+}
+
+rebuild_initramfs() {
+    log_info "Checking if initramfs needs rebuild..."
+    if command -v "$DRACUT_CMD" &>/dev/null; then
+        $DRACUT_CMD --force --no-hostonly /boot/initramfs-linux-fallback.img
+        $DRACUT_CMD --force /boot/initramfs-linux.img
+        log_ok "Initramfs rebuilt."
+    fi
+}
+
+update_grub() {
+    if command -v "$GRUB_CMD" &>/dev/null; then
+        log_info "Updating GRUB configuration..."
+        $GRUB_CMD -o /boot/grub/grub.cfg 2>/dev/null || true
+        log_ok "GRUB updated."
+    fi
+}
+
+main() {
+    check_root
+    show_header
+    update_system
+    rebuild_initramfs
+    update_grub
+    log_ok "All tasks completed."
+}
+
+main "$@"

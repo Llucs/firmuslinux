@@ -1,0 +1,4 @@
+# Firmus Linux NVIDIA auto-configuration module
+name: firmus-nvidia
+type: job
+interface: shellprocess

@@ -1,0 +1,11 @@
+# Firmus Linux sudo configuration
+# Members of wheel group can execute any command without password
+%wheel ALL=(ALL:ALL) NOPASSWD: ALL
+
+# Keep environment variables
+Defaults env_keep += "HOME"
+Defaults env_keep += "XDG_CONFIG_HOME"
+Defaults env_keep += "XDG_DATA_HOME"
+
+# Secure path
+Defaults secure_path = /usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin

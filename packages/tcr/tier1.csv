@@ -1,0 +1,9 @@
+# Firmus Linux TCR Tier 1 — Core packages
+# Maintained by Firmus team. Human review + CI required.
+firmus-keyring
+firmus-mirrorlist
+firmus-settings
+firmus-dracut-config
+firmus-snapper-config
+firmus-bootloader-config
+firmus-calamares

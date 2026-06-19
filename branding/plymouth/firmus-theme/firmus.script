@@ -1,0 +1,26 @@
+# Firmus Linux Plymouth boot animation script
+
+Window.SetBackgroundTopColor(0.04, 0.04, 0.10);
+Window.SetBackgroundBottomColor(0.04, 0.04, 0.10);
+
+# Firmus logo animation
+logo = Image("logo.png");
+sprite = Sprite(logo);
+sprite.SetX(Window.GetWidth() / 2 - logo.GetWidth() / 2);
+sprite.SetY(Window.GetHeight() / 2 - logo.GetHeight() / 2);
+
+# Progress bar
+progress_bar = ProgressBar();
+progress_bar.SetX(Window.GetWidth() / 2 - 150);
+progress_bar.SetY(Window.GetHeight() * 0.75);
+progress_bar.SetWidth(300);
+progress_bar.SetHeight(20);
+progress_bar.SetBarColor(0.0, 1.0, 1.0);
+progress_bar.SetBackgroundColor(0.1, 0.1, 0.3);
+
+# Message
+message = Text("Firmus Linux");
+message.SetX(Window.GetWidth() / 2 - message.GetWidth() / 2);
+message.SetY(Window.GetHeight() * 0.65);
+message.SetColor(0.0, 1.0, 1.0);
+message.SetFont("DejaVu Sans", 14);

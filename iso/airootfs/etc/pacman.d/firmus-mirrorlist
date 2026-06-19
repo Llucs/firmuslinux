@@ -1,0 +1,10 @@
+# Firmus Linux mirror list
+# TCR repository — official package source
+# Hosted on GitHub Pages CDN
+
+[firmus]
+Server = https://firmuslinux.github.io/firmuslinux/x86_64
+
+# Fallback — raw GitHub content delivery
+# Used when Pages is unavailable
+Server = https://raw.githubusercontent.com/firmuslinux/firmuslinux/gh-pages/x86_64

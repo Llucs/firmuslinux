@@ -1,0 +1,46 @@
+# Maintainer: Llucs <c307lucas@gmail.com>
+# Firmus Linux system settings package
+
+pkgname=firmus-settings
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Firmus Linux default system settings and configurations"
+arch=('any')
+url="https://github.com/firmuslinux/firmuslinux"
+license=('GPL-3.0-or-later')
+depends=('firmus-keyring')
+source=(
+  "99-firmus.conf"
+  "firmus.tmpfiles"
+)
+sha256sums=('SKIP' 'SKIP')
+
+package() {
+  # pacman configuration
+  install -d "$pkgdir/etc/pacman.d"
+  install -m 644 "$srcdir/99-firmus.conf" "$pkgdir/etc/pacman.d/"
+
+  # tmpfiles
+  install -d "$pkgdir/usr/lib/tmpfiles.d"
+  install -m 644 "$srcdir/firmus.tmpfiles" "$pkgdir/usr/lib/tmpfiles.d/firmus.conf"
+}
+
+99-firmus.conf() {
+cat << 'PACMANEOF'
+# Firmus Linux pacman configuration
+[options]
+ParallelDownloads = 10
+Color
+CheckSpace
+ILoveCandy
+VerbosePkgLists
+PACMANEOF
+}
+
+firmus.tmpfiles() {
+cat << 'TMPEOF'
+# Firmus Linux tmpfiles
+d /var/cache/pacman/pkg 0755 root root 7d
+d /var/log/journal 0755 root root 14d
+TMPEOF
+}

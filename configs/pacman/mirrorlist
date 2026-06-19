@@ -1,0 +1,24 @@
+# Firmus Linux mirror list
+# Arch Linux repositories
+
+## Worldwide
+Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
+Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch
+Server = https://archlinux.thaller.ws/$repo/os/$arch
+Server = https://mirror.osbeck.com/archlinux/$repo/os/$arch
+Server = https://mirror.cyberbits.eu/archlinux/$repo/os/$arch
+
+## United States
+Server = https://mirrors.advancedhosters.com/archlinux/$repo/os/$arch
+Server = https://mirror.lug.udel.edu/pub/archlinux/$repo/os/$arch
+Server = https://mirror.us.leaseweb.net/archlinux/$repo/os/$arch
+
+## Europe
+Server = https://mirror.de.leaseweb.net/archlinux/$repo/os/$arch
+Server = https://mirror.fra10.de.leaseweb.net/archlinux/$repo/os/$arch
+Server = https://archlinux.mailtunnel.eu/$repo/os/$arch
+
+## Asia
+Server = https://mirror.sjtu.edu.cn/archlinux/$repo/os/$arch
+Server = https://archlinux.cs.nctu.edu.tw/$repo/os/$arch
+Server = https://ftp.jaist.ac.jp/pub/Linux/ArchLinux/$repo/os/$arch

@@ -1,0 +1,21 @@
+# Maintainer: Llucs <c307lucas@gmail.com>
+
+pkgname=firmus-keyring
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Firmus Linux GPG keyring for TCR package verification"
+arch=('any')
+url="https://github.com/firmuslinux/firmuslinux"
+license=('GPL-3.0-or-later')
+depends=('pacman>=6.0')
+optdepends=('archlinux-keyring:Arch Linux keyring')
+install=firmus-keyring.install
+source=("firmus.gpg")
+sha256sums=('542a68e30ab4d4b9723a2398e496405a942f118254406668bf3e843f47a68bc5')
+validpgpkeys=('2BED19183F38601A6B26D7D4FBEEDF114FD202D2')
+
+package() {
+  install -d "$pkgdir/usr/share/firmus/keyring"
+  install -m 644 "$srcdir/firmus.gpg" "$pkgdir/usr/share/firmus/keyring/"
+  install -d "$pkgdir/usr/share/doc/firmus-keyring"
+}

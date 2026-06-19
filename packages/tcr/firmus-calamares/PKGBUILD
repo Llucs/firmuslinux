@@ -1,0 +1,29 @@
+# Maintainer: Llucs <c307lucas@gmail.com>
+# Firmus Linux Calamares branding and modules
+
+pkgname=firmus-calamares
+pkgver=1.0.0
+pkgrel=1
+pkgdesc="Firmus Linux Calamares installer branding and custom modules"
+arch=('any')
+url="https://github.com/firmuslinux/firmuslinux"
+license=('GPL-3.0-or-later')
+depends=('calamares>=3.4.2')
+source=()
+sha256sums=()
+
+package() {
+  # Branding
+  install -d "$pkgdir/usr/share/calamares/branding/firmus"
+  install -m 644 "$srcdir/../branding.desc" "$pkgdir/usr/share/calamares/branding/firmus/" 2>/dev/null || true
+
+  # Module configurations
+  install -d "$pkgdir/etc/calamares/modules"
+  for conf in firmus-nvidia.conf firmus-seat.conf firmus-snapper.conf \
+              firmus-bootloader.conf firmus-tcr.conf firmus-desktop.conf; do
+    if [ -f "$srcdir/../calamares/modules/${conf%-conf}/$conf" ]; then
+      install -m 644 "$srcdir/../calamares/modules/${conf%-conf}/$conf" \
+        "$pkgdir/etc/calamares/modules/"
+    fi
+  done
+}

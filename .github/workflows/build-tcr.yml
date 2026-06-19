@@ -1,0 +1,148 @@
+name: Build TCR Packages
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+    inputs:
+      tier:
+        description: 'Tier to build (1, 2, 3, or all)'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - 'all'
+          - '1'
+          - '2'
+          - '3'
+  push:
+    branches:
+      - main
+    paths:
+      - 'packages/tcr/**'
+      - '.github/workflows/build-tcr.yml'
+
+env:
+  REPO_NAME: firmus
+  GPG_KEY_ID: Firmus Linux Signing Key
+  PAGES_BRANCH: gh-pages
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux/archlinux:latest
+      options: --privileged
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize pacman keyring
+        run: |
+          pacman-key --init
+          pacman-key --populate archlinux
+
+      - name: Install build dependencies
+        run: |
+          pacman -Syu --noconfirm --needed \
+            base-devel \
+            git \
+            namcap \
+            python \
+            python-yaml \
+            curl \
+            jq
+
+      - name: Import Firmus signing key
+        run: |
+          if [ -f "packages/tcr/firmus-keyring/firmus.gpg" ]; then
+            pacman-key --add packages/tcr/firmus-keyring/firmus.gpg
+            pacman-key --lsign-key "$GPG_KEY_ID"
+          fi
+          mkdir -p /etc/pacman.d/gnupg
+
+      - name: Read package list by tier
+        id: packages
+        run: |
+          TIER="${{ github.event.inputs.tier }}"
+          if [ -z "$TIER" ] || [ "$TIER" = "all" ]; then
+            TIERS="1 2 3"
+          else
+            TIERS="$TIER"
+          fi
+
+          PACKAGE_LIST=""
+          for T in $TIERS; do
+            CSV_FILE="packages/tcr/tier${T}.csv"
+            if [ -f "$CSV_FILE" ]; then
+              while IFS= read -r line; do
+                [ -z "$line" ] && continue
+                [[ "$line" =~ ^# ]] && continue
+                PACKAGE_LIST="$PACKAGE_LIST $line"
+              done < "$CSV_FILE"
+            fi
+          done
+
+          echo "packages=$PACKAGE_LIST" >> $GITHUB_OUTPUT
+
+      - name: Build packages
+        run: |
+          mkdir -p repo/x86_64
+          cd packages/tcr
+
+          for pkg in ${{ steps.packages.outputs.packages }}; do
+            if [ ! -d "$pkg" ]; then
+              echo "Skipping $pkg — no PKGBUILD directory"
+              continue
+            fi
+
+            echo "=== Building $pkg ==="
+            cd "$pkg"
+
+            if [ ! -f "PKGBUILD" ]; then
+              echo "No PKGBUILD in $pkg, skipping"
+              cd ..
+              continue
+            fi
+
+            chown -R root:root .
+            sudo -u nobody makepkg --noconfirm --syncdeps --cleanbuild
+
+            PKG_FILE=$(ls *.pkg.tar.zst 2>/dev/null | head -1)
+            if [ -n "$PKG_FILE" ]; then
+              cp "$PKG_FILE" "../../repo/x86_64/"
+              if [ -f "${PKG_FILE}.sig" ]; then
+                cp "${PKG_FILE}.sig" "../../repo/x86_64/"
+              fi
+            fi
+
+            cd ..
+          done
+
+      - name: Check packages with namcap
+        run: |
+          for pkg in repo/x86_64/*.pkg.tar.zst; do
+            [ -f "$pkg" ] || continue
+            echo "Checking $pkg..."
+            namcap "$pkg" || true
+          done
+
+      - name: Update repository database
+        run: |
+          cd repo/x86_64
+          if [ -n "$(ls *.pkg.tar.zst 2>/dev/null)" ]; then
+            rm -f firmus.db firmus.db.tar.zst firmus.files firmus.files.tar.zst
+            repo-add --sign firmus.db.tar.zst *.pkg.tar.zst
+          else
+            echo "No packages built, skipping database update"
+          fi
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./repo
+          destination_dir: .
+          keep_files: false
+          publish_branch: gh-pages

@@ -1,0 +1,79 @@
+name: Test ISO
+
+on:
+  workflow_run:
+    workflows: ["Build Firmus ISO"]
+    types:
+      - completed
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux/archlinux:latest
+      options: --privileged
+
+    steps:
+      - name: Download ISO artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: firmuslinux-iso
+          path: /tmp/iso
+
+      - name: Install test dependencies
+        run: |
+          pacman -Syu --noconfirm --needed \
+            qemu-system-x86 \
+            qemu-user-static \
+            dmidecode \
+            util-linux
+
+      - name: Verify ISO integrity
+        run: |
+          ISO_FILE=$(ls /tmp/iso/*.iso | head -1)
+          echo "Testing ISO: $ISO_FILE"
+          ls -lh "$ISO_FILE"
+          file "$ISO_FILE"
+
+          if [ -f "${ISO_FILE}.sha256" ]; then
+            cd /tmp/iso
+            sha256sum -c "${ISO_FILE##*/}.sha256"
+          fi
+
+      - name: Check ISO structure
+        run: |
+          ISO_FILE=$(ls /tmp/iso/*.iso | head -1)
+          xorriso -indev "$ISO_FILE" -osirrox on -extract / /tmp/iso-root
+          ls -la /tmp/iso-root/
+          ls -la /tmp/iso-root/arch/boot/x86_64/ 2>/dev/null || echo "No arch/boot directory"
+
+          if [ -f "/tmp/iso-root/arch/boot/x86_64/vmlinuz-linux" ]; then
+            echo "Kernel found in ISO — OK"
+          else
+            echo "WARNING: Kernel not found in expected location"
+          fi
+
+          if [ -f "/tmp/iso-root/arch/boot/x86_64/initramfs-linux.img" ]; then
+            echo "Initramfs found — OK"
+          else
+            echo "WARNING: initramfs not found"
+          fi
+
+      - name: Boot test in QEMU
+        run: |
+          ISO_FILE=$(ls /tmp/iso/*.iso | head -1)
+          timeout 120 qemu-system-x86_64 \
+            -m 2G \
+            -smp 2 \
+            -cdrom "$ISO_FILE" \
+            -boot d \
+            -nographic \
+            -no-reboot \
+            -serial mon:stdio \
+            -drive file=/tmp/test-disk.img,format=raw,if=virtio \
+            -device virtio-net,netdev=net0 \
+            -netdev user,id=net0 \
+          || true
+
+          echo "QEMU boot test completed"

@@ -1,0 +1,102 @@
+#!/usr/bin/env bash
+# Firmus Linux Rollback — List and restore btrfs snapshots
+set -euo pipefail
+
+VERSION="1.0.0"
+SNAPPER_CMD="/usr/bin/snapper"
+BTRFS_CMD="/usr/bin/btrfs"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log_info() { echo -e "${CYAN}[INFO]${NC} $*"; }
+log_ok() { echo -e "${GREEN}[OK]${NC} $*"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $*"; }
+
+check_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        log_error "This command must be run as root."
+        exit 1
+    fi
+}
+
+check_snapper() {
+    if ! command -v "$SNAPPER_CMD" &>/dev/null; then
+        log_error "snapper is not installed. Install with: pacman -S snapper"
+        exit 1
+    fi
+}
+
+list_snapshots() {
+    check_snapper
+    echo "========================================"
+    echo "  Firmus Linux — Available Snapshots"
+    echo "========================================"
+    echo ""
+    $SNAPPER_CMD list
+    echo ""
+    log_info "Total snapshots: $($SNAPPER_CMD list | tail -n +5 | wc -l)"
+}
+
+rollback_to() {
+    local snap_id="$1"
+    check_snapper
+    log_info "Rolling back to snapshot #$snap_id..."
+    if $SNAPPER_CMD undochange "$snap_id"..0; then
+        log_ok "Rollback to snapshot #$snap_id completed."
+        log_warn "A reboot is required to apply changes."
+    else
+        log_error "Rollback failed."
+        exit 1
+    fi
+}
+
+show_help() {
+    cat <<EOF
+firmus-rollback — List and restore btrfs snapshots
+
+Usage:
+  firmus-rollback --list       List all available snapshots
+  firmus-rollback --id <NUM>   Roll back to specific snapshot
+  firmus-rollback --help       Show this help
+
+Examples:
+  firmus-rollback --list
+  firmus-rollback --id 42
+EOF
+}
+
+main() {
+    check_root
+
+    case "${1:-}" in
+        --list|-l)
+            list_snapshots
+            ;;
+        --id|-i)
+            if [ -z "${2:-}" ]; then
+                log_error "Snapshot ID required."
+                show_help
+                exit 1
+            fi
+            rollback_to "$2"
+            ;;
+        --help|-h)
+            show_help
+            ;;
+        *)
+            list_snapshots
+            echo ""
+            read -rp "Enter snapshot ID to roll back (or press Enter to exit): " snap_id
+            if [ -n "$snap_id" ]; then
+                rollback_to "$snap_id"
+            fi
+            ;;
+    esac
+}
+
+main "$@"

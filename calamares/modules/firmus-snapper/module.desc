@@ -1,0 +1,4 @@
+# Firmus Linux snapper configuration module
+name: firmus-snapper
+type: job
+interface: shellprocess

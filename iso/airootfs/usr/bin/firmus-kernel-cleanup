@@ -1,0 +1,73 @@
+#!/usr/bin/env bash
+# Firmus Linux Kernel Cleanup — Keep only current and 1 previous kernel
+set -euo pipefail
+
+KEEP_COUNT=2
+EFI_DIR="/efi"
+MODULES_DIR="/usr/lib/modules"
+BOOT_DIR="/boot"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log_info() { echo -e "${CYAN}[INFO]${NC} $*"; }
+log_ok() { echo -e "${GREEN}[OK]${NC} $*"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
+
+get_running_kernel() {
+    uname -r
+}
+
+get_installed_kernels() {
+    ls -1 "$MODULES_DIR" 2>/dev/null | sort -V || true
+}
+
+clean_kernel_modules() {
+    local running_kernel="$1"
+    local all_kernels
+    all_kernels=$(get_installed_kernels)
+
+    if [ -z "$all_kernels" ]; then
+        return
+    fi
+
+    local keep=0
+    echo "$all_kernels" | while read -r kver; do
+        if [ "$kver" = "$running_kernel" ] || [ "$keep" -lt "$KEEP_COUNT" ]; then
+            log_info "Keeping kernel: $kver"
+            keep=$((keep + 1))
+            continue
+        fi
+
+        if [ -d "$MODULES_DIR/$kver" ]; then
+            log_info "Removing kernel modules: $kver"
+            rm -rf "$MODULES_DIR/$kver"
+
+            if [ -f "$BOOT_DIR/initramfs-$kver.img" ]; then
+                rm -f "$BOOT_DIR/initramfs-$kver.img"
+            fi
+            if [ -f "$BOOT_DIR/vmlinuz-$kver" ]; then
+                rm -f "$BOOT_DIR/vmlinuz-$kver"
+            fi
+            if [ -f "$EFI_DIR/EFI/Linux/firmus-$kver.efi" ]; then
+                rm -f "$EFI_DIR/EFI/Linux/firmus-$kver.efi"
+            fi
+        fi
+    done
+}
+
+main() {
+    log_info "Running kernel: $(get_running_kernel)"
+    log_info "Kernel cleanup starting (keeping last $KEEP_COUNT)..."
+
+    if [ -d "$MODULES_DIR" ]; then
+        clean_kernel_modules "$(get_running_kernel)"
+    fi
+
+    log_ok "Kernel cleanup completed"
+}
+
+main "$@"

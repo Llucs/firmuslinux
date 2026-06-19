@@ -1,0 +1,49 @@
+name: Deploy TCR Repository to Pages
+
+on:
+  workflow_run:
+    workflows: ["Build TCR Packages"]
+    types:
+      - completed
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' || github.event_name == 'workflow_dispatch' }}
+
+    steps:
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v4
+        with:
+          ref: gh-pages
+          path: repo
+
+      - name: Verify repository structure
+        run: |
+          ls -la repo/x86_64/ || echo "No packages in repo yet"
+          if [ -f "repo/x86_64/firmus.db.tar.zst" ]; then
+            echo "Repository database exists"
+            tar -tzf repo/x86_64/firmus.db.tar.zst | head -20
+          fi
+
+      - name: Setup Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: repo
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

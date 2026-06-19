@@ -1,0 +1,94 @@
+#!/usr/bin/env bash
+# Firmus Linux Initramfs Rebuild — Unified dracut initramfs regeneration
+set -euo pipefail
+
+DRACUT_CMD="/usr/bin/dracut"
+MKINITCPIO_CMD="/usr/bin/mkinitcpio"
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m'
+
+log_info() { echo -e "${CYAN}[INFO]${NC} $*"; }
+log_ok() { echo -e "${GREEN}[OK]${NC} $*"; }
+log_warn() { echo -e "${YELLOW}[WARN]${NC} $*"; }
+log_error() { echo -e "${RED}[ERROR]${NC} $*"; }
+
+check_root() {
+    if [ "$(id -u)" -ne 0 ]; then
+        log_error "This command must be run as root."
+        exit 1
+    fi
+}
+
+check_mkinitcpio() {
+    if command -v "$MKINITCPIO_CMD" &>/dev/null; then
+        log_warn "mkinitcpio detected! This is not supported on Firmus Linux."
+        log_warn "Firmus uses dracut exclusively."
+        log_info "Remove mkinitcpio: pacman -Rns mkinitcpio"
+    fi
+}
+
+get_kernel_version() {
+    local kver
+    kver=$(ls -1 /usr/lib/modules/ 2>/dev/null | sort -V | tail -1)
+    if [ -z "$kver" ]; then
+        kver=$(uname -r)
+    fi
+    echo "$kver"
+}
+
+rebuild_dracut() {
+    local kver
+    kver=$(get_kernel_version)
+    log_info "Kernel version: $kver"
+
+    if [ ! -d "/usr/lib/modules/$kver" ]; then
+        log_error "Kernel modules directory not found: /usr/lib/modules/$kver"
+        exit 1
+    fi
+
+    log_info "Rebuilding standard initramfs..."
+    if $DRACUT_CMD --force --kver "$kver" "/boot/initramfs-linux.img"; then
+        log_ok "Standard initramfs rebuilt"
+    else
+        log_error "Failed to rebuild standard initramfs"
+        return 1
+    fi
+
+    log_info "Rebuilding fallback initramfs..."
+    if $DRACUT_CMD --force --no-hostonly --kver "$kver" "/boot/initramfs-linux-fallback.img"; then
+        log_ok "Fallback initramfs rebuilt"
+    else
+        log_warn "Fallback initramfs may be incomplete"
+    fi
+
+    log_info "Checking for UKI..."
+    if [ -f "/boot/EFI/Linux/firmus-$kver.efi" ]; then
+        log_ok "UKI present: /boot/EFI/Linux/firmus-$kver.efi"
+    else
+        log_warn "No UKI found at /boot/EFI/Linux/"
+    fi
+}
+
+main() {
+    check_root
+    echo "========================================"
+    echo "  Firmus Linux — Initramfs Rebuild"
+    echo "========================================"
+    echo ""
+
+    check_mkinitcpio
+
+    if ! command -v "$DRACUT_CMD" &>/dev/null; then
+        log_error "dracut not found. Install with: pacman -S dracut"
+        exit 1
+    fi
+
+    rebuild_dracut
+    log_ok "Initramfs rebuild completed."
+}
+
+main "$@"

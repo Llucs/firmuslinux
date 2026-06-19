@@ -1,0 +1,13 @@
+# Firmus Linux Flatpak configuration
+[Flatpak]
+# Enable Flathub by default
+flathub-enabled=true
+flathub-url=https://flathub.org/repo/flathub.flatpakrepo
+
+# System-wide installation
+system-install=true
+user-install=true
+
+# Auto-update Flatpaks weekly
+auto-update=true
+auto-update-interval=weekly

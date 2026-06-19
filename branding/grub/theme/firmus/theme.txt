@@ -1,0 +1,30 @@
+# Firmus Linux GRUB theme
+title-text: "Firmus Linux"
+title-color: "#00FFFF"
+title-font: "DejaVu Sans Bold 18"
+desktop-image: "background.png"
+desktop-color: "#0A0A1A"
+
++ boot_menu {
+    left = 25%
+    top = 30%
+    width = 50%
+    height = 40%
+    item_color = "#C0C0C0"
+    selected_item_color = "#00FFFF"
+    item_height = 32
+    item_padding = 8
+    item_spacing = 4
+    item_font = "DejaVu Sans 12"
+    selected_item_font = "DejaVu Sans Bold 12"
+    scrollbar = true
+}
+
++ terminal_box {
+    id = "__text_entry__"
+    left = 30%
+    top = 35%
+    width = 40%
+    height = 30%
+    text_color = "#FFFFFF"
+}

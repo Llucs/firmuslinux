@@ -1,0 +1,44 @@
+name: Bug Report
+description: Report a problem with Firmus Linux
+title: "[BUG] "
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Firmus Version
+      description: ISO version or package version
+    validations:
+      required: true
+  - type: dropdown
+    id: component
+    attributes:
+      label: Component
+      options:
+        - ISO / Installer
+        - TCR Package
+        - System Configuration
+        - Documentation
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: What happened?
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction Steps
+      description: How to reproduce the issue
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Relevant Logs
+      description: Paste relevant logs or output
+      render: shell
