@@ -43,8 +43,8 @@ package() {
 ### GitHub Actions Workflows
 - Use `archlinux/archlinux:latest` container with `--privileged`
 - Always run `pacman-key --init && pacman-key --populate archlinux` first
-- `actions/checkout@v4` for checkout
-- Use `softprops/action-gh-release@v2` for releases
+- `actions/checkout@v5` for checkout
+- Use `softprops/action-gh-release@v3` for releases
 - Use `peaceiris/actions-gh-pages@v4` for Pages deployment
 - Use `actions/github-script@v7` for API calls
 
