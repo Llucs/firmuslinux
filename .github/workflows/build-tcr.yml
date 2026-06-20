@@ -36,7 +36,7 @@ jobs:
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Initialize pacman keyring
         run: |
@@ -52,7 +52,8 @@ jobs:
             python \
             python-yaml \
             curl \
-            jq
+            jq \
+            sudo
 
       - name: Import Firmus signing key
         run: |
@@ -86,6 +87,17 @@ jobs:
 
           echo "packages=$PACKAGE_LIST" >> $GITHUB_OUTPUT
 
+      - name: Create build user
+        run: |
+          useradd -m builder
+          echo "builder ALL=(ALL) NOPASSWD: ALL" >> /etc/sudoers.d/builder
+
+      - name: Import GPG key for signing
+        run: |
+          pacman-key --add packages/tcr/firmus-keyring/firmus.gpg
+          pacman-key --lsign-key "$GPG_KEY_ID"
+          echo "default-key: $GPG_KEY_ID" >> /etc/pacman.d/gnupg/gpg.conf
+
       - name: Build packages
         run: |
           mkdir -p repo/x86_64
@@ -106,8 +118,8 @@ jobs:
               continue
             fi
 
-            chown -R root:root .
-            sudo -u nobody makepkg --noconfirm --syncdeps --cleanbuild
+            chown -R builder:builder .
+            sudo -u builder makepkg --sign --noconfirm --syncdeps --cleanbuild
 
             PKG_FILE=$(ls *.pkg.tar.zst 2>/dev/null | head -1)
             if [ -n "$PKG_FILE" ]; then

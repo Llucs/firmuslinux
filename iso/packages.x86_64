@@ -54,6 +54,7 @@ nftables
 
 # Bootloader
 grub
+syslinux
 efibootmgr
 shim
 sbctl
