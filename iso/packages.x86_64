@@ -90,15 +90,6 @@ bluez-utils
 
 # Installer
 calamares
-calamares-branding-firmus
-
-# Firmus-specific packages
-firmus-keyring
-firmus-mirrorlist
-firmus-settings
-firmus-dracut-config
-firmus-snapper-config
-firmus-bootloader-config
 
 # Desktop environments (user-selectable via Calamares)
 plasma-meta
@@ -145,5 +136,5 @@ go
 sof-firmware
 alsa-firmware
 
-# Firmus TCR repository
-firmus-keyring
+# Firmus TCR repository (unavailable during ISO bootstrap — installed post-deploy via gh-pages)
+# firmus-keyring
